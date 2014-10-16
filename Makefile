@@ -27,10 +27,10 @@ all: matmult
 %.o: %.cpp $(COMMON)
 	$(CXX) -c $(FLAGS) $(INCPATH) $<
  
-matmult:
-	$(CXX) $(FLAGS) $(INCPATH) $(LIBPATH) $(LIBS) -o matmult matmult.cpp
+matmult: matmult.cpp
+	$(CXX) $(FLAGS) $(INCPATH) -o matmult matmult.cpp $(LIBPATH) $(LIBS)
 	
-compare:
+compare: compare.cpp
 	$(CXX) $(FLAGS) $(INCPATH) -o compare compare.cpp
 
 clean:

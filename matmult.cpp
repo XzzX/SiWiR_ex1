@@ -4,9 +4,13 @@
 #include	<fstream>
 #include	<cmath>
 
+extern "C" {
+#include	<cblas.h>
+}
+
 #ifdef USE_LIKWID
 extern "C" {
-#include <likwid.h>
+#include	<likwid.h>
 }
 #endif
 
@@ -102,15 +106,17 @@ int main(int argc, char **argv) {
 
 #ifdef USE_LIKWID
 	likwid_markerInit();
-	likwid_markerStartRegion("dummy");
+	likwid_markerStartRegion("blas");
 #endif
 
 	siwir::Timer	timer;
 
+	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, dimK, dimM, dimL, 1.0, &a[0], dimL, &b[0], dimM, 0.0, &c[0], dimM);
+
 	std::cout << "calculation took " << timer.elapsed() << "s" << std::endl;
 
 #ifdef USE_LIKWID
-	likwid_markerStopRegion("dummy");
+	likwid_markerStopRegion("blas");
 	likwid_markerClose();
 #endif
 

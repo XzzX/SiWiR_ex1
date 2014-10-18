@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 
 	for (unsigned int i = 0; i < rowCount; i++) {
 		for (unsigned int j = 0; j < colCount; j++) {
-			fIn >> a[i*rowCount + j];
+			fIn >> a[i*colCount + j];
 		}
 	}
 
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
 	for (unsigned int i = 0; i < rowCount; i++) {
 		for (unsigned int j = 0; j < colCount; j++) {
-			fIn >> b[i*rowCount + j];
+			fIn >> b[i*colCount + j];
 		}
 	}
 
@@ -82,7 +82,7 @@ int main(int argc, char **argv) {
 
 	for (unsigned int i = 0; i < rowCount; i++) {
 		for (unsigned int j = 0; j < colCount; j++) {
-			if ((fabs(a[i*rowCount + j] - b[i*rowCount + j])) > EPSILON) {
+			if ((fabs(a[i*colCount + j] - b[i*colCount + j])) > EPSILON) {
 				std::cout << "Matrices NOT equal!" << std::endl;
 				exit(EXIT_FAILURE);
 			}

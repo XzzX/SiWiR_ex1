@@ -106,6 +106,15 @@ int main(int argc, char **argv) {
 #endif
 
 	siwir::Timer	timer;
+	
+	for (unsigned int k = 0; k < dimK; k++){				///rows of c
+		for (unsigned int m = 0; m < dimM; m++){			///cols of c	
+			c[k*dimM + m] = 0;
+			for (unsigned int l = 0; l < dimL; l++){
+				c[k*dimM + m] += a[k*dimL + l] * b[l*dimM + m];
+			}
+		}
+	}
 
 	std::cout << dimK << "\t" << dimL << "\t" << dimM << "\t" << timer.elapsed() << std::endl;
 

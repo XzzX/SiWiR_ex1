@@ -112,8 +112,8 @@ int main(int argc, char **argv) {
 	siwir::Timer	timer;
 
 	cblas_dgemm(CblasRowMajor, CblasNoTrans, CblasNoTrans, dimK, dimM, dimL, 1.0, &a[0], dimL, &b[0], dimM, 0.0, &c[0], dimM);
-
-	std::cout << "calculation took " << timer.elapsed() << "s" << std::endl;
+	
+	std::cout << dimK << "\t" << dimL << "\t" << dimM << "\t" << timer.elapsed() << std::endl;
 
 #ifdef USE_LIKWID
 	likwid_markerStopRegion("blas");

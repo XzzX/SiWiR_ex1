@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
 	siwir::Timer	timer;
 
-	std::cout << "calculation took " << timer.elapsed() << "s" << std::endl;
+	std::cout << dimK << "\t" << dimL << "\t" << dimM << "\t" << timer.elapsed() << std::endl;
 
 #ifdef USE_LIKWID
 	likwid_markerStopRegion("dummy");

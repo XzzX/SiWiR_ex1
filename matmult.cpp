@@ -62,9 +62,9 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	for (unsigned int i = 0; i < dimK; i++) {
-		for (unsigned int j = 0; j < dimL; j++) {
-			fIn >> a[i*dimK + j];
+	for (unsigned int k = 0; k < dimK; k++) {
+		for (unsigned int l = 0; l < dimL; l++) {
+			fIn >> a[k*dimL + l];
 		}
 	}
 
@@ -88,9 +88,9 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	for (unsigned int i = 0; i < dimL; i++) {
-		for (unsigned int j = 0; j < dimM; j++) {
-			fIn >> b[i*dimL + j];
+	for (unsigned int l = 0; l < dimL; l++) {
+		for (unsigned int m = 0; m < dimM; m++) {
+			fIn >> b[l*dimM + m];
 		}
 	}
 
@@ -126,9 +126,9 @@ int main(int argc, char **argv) {
 
 	fOut << dimK << " " << dimM << std::endl;
 
-	for (unsigned int i = 0; i < dimK; i++) {
-		for (unsigned int j = 0; j < dimM; j++) {
-			fOut << c[i*dimL + j] << std::endl;
+	for (unsigned int k = 0; k < dimK; k++) {
+		for (unsigned int m = 0; m < dimM; m++) {
+			fOut << c[k*dimM + m] << std::endl;
 		}
 	}
 

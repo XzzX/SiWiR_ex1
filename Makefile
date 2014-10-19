@@ -53,6 +53,7 @@ perf: matmult
 	./matmult matrices/perfMatrices/512x512-1 matrices/perfMatrices/512x512-2 512x512-3 >> perf.txt
 	./matmult matrices/perfMatrices/1024x1024-1 matrices/perfMatrices/1024x1024-2 1024x1024-3 >> perf.txt
 	./matmult matrices/perfMatrices/2048x2048-1 matrices/perfMatrices/2048x2048-2 2048x2048-3 >> perf.txt
+	ipython plot.py
 	
 
 clean:

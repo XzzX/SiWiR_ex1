@@ -32,6 +32,8 @@ double a[SIZE * SIZE]; /// KxL - input
 double b[SIZE * SIZE]; /// LxM - input
 double c[SIZE * SIZE]; /// KxM - output
 
+double bT[SIZE * SIZE]; /// KxM - output
+
 int main(int argc, char **argv) {
 
 	///******************************************************
@@ -107,11 +109,18 @@ int main(int argc, char **argv) {
 
 	siwir::Timer	timer;
 	
+	//transpose b
+	for (unsigned int l = 0; l < dimL; l++){				///rows of b
+		for (unsigned int m = 0; m < dimM; m++){			///cols of b	
+			bT[m * dimL + l] = b[l * dimM + m];
+		}
+	}
+	
 	for (unsigned int k = 0; k < dimK; k++){				///rows of c
 		for (unsigned int m = 0; m < dimM; m++){			///cols of c	
 			c[k*dimM + m] = 0;
 			for (unsigned int l = 0; l < dimL; l++){
-				c[k*dimM + m] += a[k*dimL + l] * b[l*dimM + m];
+				c[k * dimM + m] += a[k*dimL + l] * bT[m * dimL + l];
 			}
 		}
 	}

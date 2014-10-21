@@ -58,7 +58,11 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	fIn >> dimK >> dimL;
+    if(!(fIn >> dimK >> dimL))
+    {
+        std::cout << "Error in reading matrix entries!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 	if (( dimK > SIZE ) || ( dimL > SIZE )) {
 		std::cout << "Matrix too big!" << std::endl;
 		exit(EXIT_FAILURE);
@@ -66,7 +70,11 @@ int main(int argc, char **argv) {
 
 	for (unsigned int k = 0; k < dimK; k++) {
 		for (unsigned int l = 0; l < dimL; l++) {
-			fIn >> a[k*dimL + l];
+            if(!(fIn >> a[k*dimL + l]))
+            {
+                std::cout << "Error in reading matrix entries!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
 		}
 	}
 
@@ -80,7 +88,11 @@ int main(int argc, char **argv) {
 
 	unsigned int	tempDim = 0;
 
-	fIn >> tempDim >> dimM;
+    if(!(fIn >> tempDim >> dimM))
+    {
+        std::cout << "Error in reading matrix entries!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 	if ( tempDim != dimL ) {
 		std::cout << "Matrix dimensions not correct!" << std::endl;
 		exit(EXIT_FAILURE);
@@ -92,7 +104,11 @@ int main(int argc, char **argv) {
 
 	for (unsigned int l = 0; l < dimL; l++) {
 		for (unsigned int m = 0; m < dimM; m++) {
-			fIn >> b[l*dimM + m];
+            if(!(fIn >> b[l*dimM + m]))
+            {
+                std::cout << "Error in reading matrix entries!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
 		}
 	}
 
@@ -142,11 +158,19 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	fOut << dimK << " " << dimM << std::endl;
+    if(!(fOut << dimK << " " << dimM << std::endl))
+    {
+        std::cout << "Error in writing matrix entries!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
 	for (unsigned int k = 0; k < dimK; k++) {
 		for (unsigned int m = 0; m < dimM; m++) {
-			fOut << c[k*dimM + m] << std::endl;
+            if(!(fOut << c[k*dimM + m] << std::endl))
+            {
+                std::cout << "Error in writing matrix entries!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
 		}
 	}
 

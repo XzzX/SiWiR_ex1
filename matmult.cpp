@@ -32,6 +32,8 @@ double a[SIZE * SIZE]; /// KxL - input
 double b[SIZE * SIZE]; /// LxM - input
 double c[SIZE * SIZE]; /// KxM - output
 
+double bT[SIZE * SIZE]; /// KxM - output
+
 int main(int argc, char **argv) {
 
 	///******************************************************
@@ -56,7 +58,11 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	fIn >> dimK >> dimL;
+    if(!(fIn >> dimK >> dimL))
+    {
+        std::cout << "Error in reading matrix entries!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 	if (( dimK > SIZE ) || ( dimL > SIZE )) {
 		std::cout << "Matrix too big!" << std::endl;
 		exit(EXIT_FAILURE);
@@ -64,7 +70,11 @@ int main(int argc, char **argv) {
 
 	for (unsigned int k = 0; k < dimK; k++) {
 		for (unsigned int l = 0; l < dimL; l++) {
-			fIn >> a[k*dimL + l];
+            if(!(fIn >> a[k*dimL + l]))
+            {
+                std::cout << "Error in reading matrix entries!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
 		}
 	}
 
@@ -78,7 +88,11 @@ int main(int argc, char **argv) {
 
 	unsigned int	tempDim = 0;
 
-	fIn >> tempDim >> dimM;
+    if(!(fIn >> tempDim >> dimM))
+    {
+        std::cout << "Error in reading matrix entries!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 	if ( tempDim != dimL ) {
 		std::cout << "Matrix dimensions not correct!" << std::endl;
 		exit(EXIT_FAILURE);
@@ -90,7 +104,11 @@ int main(int argc, char **argv) {
 
 	for (unsigned int l = 0; l < dimL; l++) {
 		for (unsigned int m = 0; m < dimM; m++) {
-			fIn >> b[l*dimM + m];
+            if(!(fIn >> b[l*dimM + m]))
+            {
+                std::cout << "Error in reading matrix entries!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
 		}
 	}
 
@@ -106,6 +124,22 @@ int main(int argc, char **argv) {
 #endif
 
 	siwir::Timer	timer;
+	
+	//transpose b
+	for (unsigned int l = 0; l < dimL; l++){				///rows of b
+		for (unsigned int m = 0; m < dimM; m++){			///cols of b	
+			bT[m * dimL + l] = b[l * dimM + m];
+		}
+	}
+	
+	for (unsigned int k = 0; k < dimK; k++){				///rows of c
+		for (unsigned int m = 0; m < dimM; m++){			///cols of c	
+			c[k*dimM + m] = 0;
+			for (unsigned int l = 0; l < dimL; l++){
+				c[k * dimM + m] += a[k*dimL + l] * bT[m * dimL + l];
+			}
+		}
+	}
 
 	std::cout << dimK << "\t" << dimL << "\t" << dimM << "\t" << timer.elapsed() << std::endl;
 
@@ -124,11 +158,19 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	fOut << dimK << " " << dimM << std::endl;
+    if(!(fOut << dimK << " " << dimM << std::endl))
+    {
+        std::cout << "Error in writing matrix entries!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
 	for (unsigned int k = 0; k < dimK; k++) {
 		for (unsigned int m = 0; m < dimM; m++) {
-			fOut << c[k*dimM + m] << std::endl;
+            if(!(fOut << c[k*dimM + m] << std::endl))
+            {
+                std::cout << "Error in writing matrix entries!" << std::endl;
+                exit(EXIT_FAILURE);
+            }
 		}
 	}
 

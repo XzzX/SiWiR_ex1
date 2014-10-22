@@ -40,7 +40,7 @@ void	transpose(const Matrix& M, Matrix& MT){
 	//transpose b
 	for (int m = 0; m < M.getDimM(); ++m){				///rows of b
 		for (int n = 0; n < M.getDimN(); ++n){			///cols of b	
-			MT(n, m) = M(m, n);
+			MT(n, m) = M.get(m, n);
 		}
 	}
 }
@@ -50,8 +50,10 @@ inline
 void	naive(const Matrix& A, const Matrix& B, Matrix& C){
 	for (int m = 0; m < C.getDimM(); m++){				///rows of c
 		for (int n = 0; n < C.getDimN(); n++){			///cols of c	
+			double	temp = 0;
 			for (int l = 0; l < A.getDimN(); l++){
-				C(m, n) += A(m, l) * B.T(l, n);
+				temp += A.get(m, l) * B.getT(l, n);
+				C.set(m, n, temp);
 			}
 		}
 	}

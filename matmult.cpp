@@ -13,8 +13,6 @@ extern "C" {
 #include	"Timer.h"
 #include	"matrix.hpp"
 
-static const int	SIZE = 2048;
-
 /**
   Converts a string to an arbitrary type. >> operator must be defined for the target type.
   @param string string which should be converted
@@ -29,11 +27,11 @@ T StringTo(const std::string& string){
 	return valor;
 }
 
-double a[SIZE * SIZE]; /// KxL - input
-double b[SIZE * SIZE]; /// LxM - input
-double c[SIZE * SIZE]; /// KxM - output
+double a[LDM * LDN]; /// KxL - input
+double b[LDM * LDN]; /// LxM - input
+double bT[LDM * LDN];
+double c[LDM * LDN]; /// KxM - output
 
-double bT[SIZE * SIZE]; /// KxM - output
 
 inline
 void	transpose(const Matrix& M, Matrix& MT){
@@ -60,9 +58,9 @@ void	naive(const Matrix& A, const Matrix& B, Matrix& C){
 }
 
 void	zeroMemory(double* data){
-	for (int i = 0; i < SIZE; ++i)
-		for (int j = 0; j < SIZE; ++j)
-			data[i*SIZE + j] = 0;
+	for (int i = 0; i < LDM; ++i)
+		for (int j = 0; j < LDN; ++j)
+			data[i*LDN + j] = 0;
 }
 
 Matrix	loadMatrix(std::string filename, double* data){
@@ -80,7 +78,7 @@ Matrix	loadMatrix(std::string filename, double* data){
 		std::cout << "Error in reading matrix entries!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	if (( dimM > SIZE ) || ( dimN > SIZE )) {
+	if (( dimM > LDM ) || ( dimN > LDN )) {
 		std::cout << "Matrix too big!" << std::endl;
 		exit(EXIT_FAILURE);
 	}

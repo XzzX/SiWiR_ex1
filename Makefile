@@ -37,9 +37,9 @@ test: matmult compare
 	rm -f C1.out
 	rm -f C2.out
 	rm -f C3.out
-	./matmult matrices/testMatrices/A.in matrices/testMatrices/B.in C1.out
-	./matmult matrices/testMatrices/A2.in matrices/testMatrices/B2.in C2.out
-	./matmult matrices/testMatrices/A3.in matrices/testMatrices/B3.in C3.out
+	likwid-pin -c 2 ./matmult matrices/testMatrices/A.in matrices/testMatrices/B.in C1.out
+	likwid-pin -c 2 ./matmult matrices/testMatrices/A2.in matrices/testMatrices/B2.in C2.out
+	likwid-pin -c 2 ./matmult matrices/testMatrices/A3.in matrices/testMatrices/B3.in C3.out
 	./compare C1.out matrices/testMatrices/C.out
 	./compare C2.out matrices/testMatrices/C2.out
 	./compare C3.out matrices/testMatrices/C3.out

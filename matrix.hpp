@@ -3,8 +3,7 @@
 
 #include	<immintrin.h>
 
-static const int	LDM = 2144;
-static const int	LDN = 2144;
+static const int	LD = 2144;
 
 class	Matrix{
 public:
@@ -25,32 +24,32 @@ public:
 	
 	inline
 	double& operator()(const int row, const int col) {
-		return data[row * LDN + col];
+		return data[row * LD + col];
 	}
 	
 	inline
 	const double& operator()(const int row, const int col) const {
-		return data[row * LDN + col];
+		return data[row * LD + col];
 	}
 	
 	inline
 	void	set(const int row, const int col, const double& v){
-		data[row * LDN + col] = v;
+		data[row * LD + col] = v;
 	}
 
 	inline
 	void 	setT(const int row, const int col, const double& v){
-		dataT[col * LDM + row] = v;
+		dataT[col * LD + row] = v;
 	}
 
 	inline
-	const double& get(const int row, const int col) const {
-		return data[row * LDN + col];
+	__m256d* get(const int row, const int col) const {
+		return (__m256d*)(&data[row * LD + col]);
 	}
 
 	inline
-	const double& getT(const int row, const int col) const {
-		return dataT[col * LDM + row];
+	__m256d* getT(const int row, const int col) const {
+		return (__m256d*)(&dataT[col * LD + row]);
 	}
 
 	inline

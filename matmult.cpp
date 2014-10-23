@@ -28,10 +28,10 @@ T StringTo(const std::string& string){
 	return valor;
 }
 
-double a[LDM * LDN] __attribute__((aligned(32)));/// KxL - input
-double b[LDM * LDN] __attribute__((aligned(32)));/// LxM - input
-double bT[LDM * LDN] __attribute__((aligned(32)));
-double c[LDM * LDN] __attribute__((aligned(32)));/// KxM - output
+double a[LD * LD] __attribute__((aligned(32)));/// KxL - input
+double b[LD * LD] __attribute__((aligned(32)));/// LxM - input
+double bT[LD * LD] __attribute__((aligned(32)));
+double c[LD * LD] __attribute__((aligned(32)));/// KxM - output
 
 
 inline
@@ -39,7 +39,7 @@ void	transpose(const Matrix& M, Matrix& MT){
 	//transpose b
 	for (int m = 0; m < M.getDimM(); ++m){				///rows of b
 		for (int n = 0; n < M.getDimN(); ++n){			///cols of b	
-			MT(n, m) = M.get(m, n);
+			MT(n, m) = M(m, n);
 		}
 	}
 }
@@ -47,21 +47,29 @@ void	transpose(const Matrix& M, Matrix& MT){
 ///calculates AxB=C
 inline
 void	naive(const Matrix& A, const Matrix& B, Matrix& C){
-	for (int m = 0; m < C.getDimM(); m++){				///rows of c
-		for (int n = 0; n < C.getDimN(); n++){			///cols of c	
-			double	temp = 0;
-			for (int l = 0; l < A.getDimN(); l++){
-				temp += A.get(m, l) * B.getT(l, n);
-				C.set(m, n, temp);
+	for (int m = 0; m < C.getDimM(); ++m){				///rows of c
+		for (int n = 0; n < C.getDimN(); ++n){			///cols of c	
+			__m256d*	pA = A.get(m, 0);
+			__m256d*	pB = B.getT(0, n);
+			//__m256d		pC;
+			__m256d		W = _mm256_setzero_pd();
+			for (int l = 0; l < A.getDimN(); l+=4){
+				//pC = _mm256_mul_pd(*pA, *pB);
+				//pD = _mm256_add_pd(pC, pD);
+				W = W + (*pA) * (*pB);
+				pA++;
+				pB++;
 			}
+
+			C(m, n) = W[0] + W[1] + W[2] + W[3];
 		}
 	}
 }
 
 void	zeroMemory(double* data){
-	for (int i = 0; i < LDM; ++i)
-		for (int j = 0; j < LDN; ++j)
-			data[i*LDN + j] = 0;
+	for (int i = 0; i < LD; ++i)
+		for (int j = 0; j < LD; ++j)
+			data[i*LD + j] = 0;
 }
 
 Matrix	loadMatrix(std::string filename, double* data){
@@ -79,7 +87,7 @@ Matrix	loadMatrix(std::string filename, double* data){
 		std::cout << "Error in reading matrix entries!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
-	if (( dimM > LDM ) || ( dimN > LDN )) {
+	if (( dimM > LD ) || ( dimN > LD )) {
 		std::cout << "Matrix too big!" << std::endl;
 		exit(EXIT_FAILURE);
 	}
@@ -152,7 +160,8 @@ int main(int argc, char **argv) {
 	///******************************************************
 	///********************** CALCULATION *******************
 	///******************************************************
-
+	double time = 0;
+	
 #ifdef USE_LIKWID
 	likwid_markerInit();
 	likwid_markerStartRegion("dummy");
@@ -164,7 +173,8 @@ int main(int argc, char **argv) {
 
 	naive(A, B, C);
 
-	std::cout << A.getDimM() << "\t" << A.getDimN() << "\t" << C.getDimN() << "\t" << timer.elapsed() << std::endl;
+	time = timer.elapsed();
+	std::cout << A.getDimM() << "\t" << A.getDimN() << "\t" << C.getDimN() << "\t" << time << std::endl;
 
 #ifdef USE_LIKWID
 	likwid_markerStopRegion("dummy");

@@ -3,6 +3,7 @@
 #include	<sstream>
 #include	<fstream>
 #include	<cmath>
+#include	<immintrin.h>
 
 #ifdef USE_LIKWID
 extern "C" {
@@ -27,10 +28,10 @@ T StringTo(const std::string& string){
 	return valor;
 }
 
-double a[LDM * LDN]; /// KxL - input
-double b[LDM * LDN]; /// LxM - input
-double bT[LDM * LDN];
-double c[LDM * LDN]; /// KxM - output
+double a[LDM * LDN] __attribute__((aligned(32)));/// KxL - input
+double b[LDM * LDN] __attribute__((aligned(32)));/// LxM - input
+double bT[LDM * LDN] __attribute__((aligned(32)));
+double c[LDM * LDN] __attribute__((aligned(32)));/// KxM - output
 
 
 inline

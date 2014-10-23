@@ -1,6 +1,8 @@
 #ifndef	MATRIX_HPP_INCLUDED
 #define	MATRIX_HPP_INCLUDED
 
+#include	<immintrin.h>
+
 static const int	LDM = 2144;
 static const int	LDN = 2144;
 

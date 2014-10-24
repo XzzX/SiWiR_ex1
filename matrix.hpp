@@ -33,13 +33,13 @@ public:
 	}
 	
 	inline
-	void	set(const int row, const int col, const double& v){
-		data[row * LD + col] = v;
+	void	set(const int row, const int col, const __m256d& v){
+		_mm256_store_pd(&data[row * LD + col], v);
 	}
 
 	inline
-	void 	setT(const int row, const int col, const double& v){
-		dataT[col * LD + row] = v;
+	void 	setT(const int row, const int col, const __m256d& v){
+		_mm256_store_pd(&data[row * LD + col], v);
 	}
 
 	inline

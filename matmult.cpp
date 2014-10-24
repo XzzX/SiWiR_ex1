@@ -12,54 +12,135 @@ extern "C" {
 #endif
 
 #include	"Timer.h"
-#include	"matrix.hpp"
+
+static const unsigned int	SIZE = 2048;
 
 /**
-  Converts a string to an arbitrary type. >> operator must be defined for the target type.
-  @param string string which should be converted
-  @return converted string
- **/
+Converts a string to an arbitrary type. >> operator must be defined for the target type.
+@param string string which should be converted
+@return converted string
+**/
 template<typename T>
 T StringTo(const std::string& string){
-	T valor;
+    T valor;
 
-	std::stringstream stream(string);
-	stream >> valor;
-	return valor;
+    std::stringstream stream(string);
+    stream >> valor;
+    return valor;
 }
 
-double a[LD * LD] __attribute__((aligned(32)));/// KxL - input
-double b[LD * LD] __attribute__((aligned(32)));/// LxM - input
-double bT[LD * LD] __attribute__((aligned(32)));
-double c[LD * LD] __attribute__((aligned(32)));/// KxM - output
+double a[SIZE * SIZE] __attribute__((aligned(32))); /// KxL - input
+double b[SIZE * SIZE] __attribute__((aligned(32))); /// LxM - input
+double c[SIZE * SIZE] __attribute__((aligned(32))); /// KxM - output
 
+double bT[SIZE * SIZE] __attribute__((aligned(32))); /// KxM - output
 
-inline
-void	transpose(const Matrix& M, Matrix& MT){
-	//transpose b
-	for (int m = 0; m < M.getDimM(); ++m){				///rows of b
-		for (int n = 0; n < M.getDimN(); ++n){			///cols of b	
-			MT(n, m) = M(m, n);
+void	zeroMemory(double* data){
+	for (unsigned int i = 0; i < SIZE; ++i)
+		for (unsigned int j = 0; j < SIZE; ++j)
+			data[i*SIZE + j] = 0;
+}
+
+int main(int argc, char **argv) {
+	zeroMemory(a);
+	zeroMemory(b);
+	zeroMemory(c);
+	zeroMemory(bT);
+
+	///******************************************************
+	///********************** INPUT *************************
+	///******************************************************
+
+	if (argc != 4) {
+		std::cout << "Invalid number of arguments!" << std::endl;
+		std::cout << "./compare A.out B.out" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	//dimension of matrices
+	// KxL   LxM
+	unsigned int	dimK = 0;
+	unsigned int	dimL = 0;
+	unsigned int	dimM = 0;
+
+	std::ifstream	fIn(argv[1]);
+	if (!fIn) {
+		std::cout << "Error opening file: " << argv[1] << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	fIn >> dimK >> dimL;
+	if (( dimK > SIZE ) || ( dimL > SIZE )) {
+		std::cout << "Matrix too big!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	for (unsigned int k = 0; k < dimK; k++) {
+		for (unsigned int l = 0; l < dimL; l++) {
+			fIn >> a[k*dimL + l];
 		}
 	}
-}
 
-///calculates AxB=C
-inline
-void	naive(const Matrix& A, const Matrix& B, Matrix& C){
-	for (int m = 0; m < C.getDimM(); ++m){				///rows of c
-		for (int n = 0; n < C.getDimN(); n+=4){			///cols of c	
-			__m256d*	pA = A.get(m, 0);
-			__m256d*	pB = B.getT(0, n);
-			__m256d*	pC = B.getT(0, n+1);
-			__m256d*	pD = B.getT(0, n+2);
-			__m256d*	pE = B.getT(0, n+3);
+	fIn.close();
+
+	fIn.open(argv[2]);
+	if (!fIn) {
+		std::cout << "Error opening file: " << argv[2] << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	unsigned int	tempDim = 0;
+
+	fIn >> tempDim >> dimM;
+	if ( tempDim != dimL ) {
+		std::cout << "Matrix dimensions not correct!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	if ( dimM > SIZE ) {
+		std::cout << "Matrix too big!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	for (unsigned int l = 0; l < dimL; l++) {
+		for (unsigned int m = 0; m < dimM; m++) {
+			fIn >> b[l*dimM + m];
+		}
+	}
+
+	fIn.close();
+	///******************************************************
+	///********************** CALCULATION *******************
+	///******************************************************
+
+	
+
+#ifdef USE_LIKWID
+	likwid_markerInit();
+	likwid_markerStartRegion("dummy");
+#endif
+
+	siwir::Timer	timer;
+	
+	//transpose b
+	for (unsigned int l = 0; l < dimL; l++){				///rows of b
+		for (unsigned int m = 0; m < dimM; m++){			///cols of b	
+			bT[m * dimL + l] = b[l * dimM + m];
+		}
+	}
+
+	for (size_t k = 0; k < dimK; k++){				///rows of c
+		for (size_t m = 0; m < dimM; m+=4){			///cols of c		
+			__m256d*	pA = (__m256d*) &a[k*dimL];
+			__m256d*	pB = (__m256d*) &bT[m * dimL];
+			__m256d*	pC = (__m256d*) &bT[m * dimL + 1];
+			__m256d*	pD = (__m256d*) &bT[m * dimL + 2];
+			__m256d*	pE = (__m256d*) &bT[m * dimL + 3];
 			//__m256d		pC;
 			__m256d		W = _mm256_setzero_pd();
 			__m256d		X = _mm256_setzero_pd();
 			__m256d		Y = _mm256_setzero_pd();
 			__m256d		Z = _mm256_setzero_pd();
-			for (int l = 0; l < A.getDimN(); l+=4){
+			for (size_t l = 0; l < dimL; l += 4){
 				//pC = _mm256_mul_pd(*pA, *pB);
 				//pD = _mm256_add_pd(pC, pD);
 				W = W + (*pA) * (*pB);
@@ -74,120 +155,37 @@ void	naive(const Matrix& A, const Matrix& B, Matrix& C){
 			}
 			__m256d s = {W[0]+W[1]+W[2]+W[3], X[0]+X[1]+X[2]+X[3], Y[0]+Y[1]+Y[2]+Y[3], Z[0]+Z[1]+Z[2]+Z[3]};
 
-			C.set(m, n, s);
+			//std::cout << k << "\t" << m << std::endl;
+			// 0 972
+			_mm256_store_pd(&c[k * dimM + m], s);
 		}
 	}
-}
-
-void	zeroMemory(double* data){
-	for (int i = 0; i < LD; ++i)
-		for (int j = 0; j < LD; ++j)
-			data[i*LD + j] = 0;
-}
-
-Matrix	loadMatrix(std::string filename, double* data){
-	int dimM = 0;
-	int dimN = 0;
+		std::cout << "calculation" << std::endl;
+	/*
+	double temp[4] __attribute__((aligned(32)));
 	
-	std::ifstream	fIn(filename);
-	if (!fIn) {
-		std::cout << "Error opening file: " << filename << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	if(!(fIn >> dimM >> dimN))
-	{
-		std::cout << "Error in reading matrix entries!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-	if (( dimM > LD ) || ( dimN > LD )) {
-		std::cout << "Matrix too big!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	Matrix	temp(data, nullptr, dimM, dimN, 0, 0);
-
-	zeroMemory(data);
-
-	for (int m = 0; m < dimM; m++) {
-		for (int n = 0; n < dimN; n++) {
-			if(!(fIn >> temp(m, n)))
-			{
-				std::cout << "Error in reading matrix entries!" << std::endl;
-				exit(EXIT_FAILURE);
+	//calculate product
+	for (size_t k = 0; k < dimK; k++){				///rows of c
+		for (size_t m = 0; m < dimM; m++){			///cols of c	
+			__m256d*	pA = (__m256d*) &a[k*dimL];
+			__m256d*	pB = (__m256d*) &bT[m * dimL];
+			__m256d		pC;
+			__m256d		pD = _mm256_setzero_pd();
+			for (size_t l = 0; l < dimL; l += 4){*/
+				/*for (size_t t = 0; t < 2; t++){
+					temp[t] += a[k*dimL + l + t] * bT[m * dimL + l + t];
+				}*/
+				/*pC = _mm256_mul_pd(*pA, *pB);
+				pD = _mm256_add_pd(pC, pD);
+				pA++;
+				pB++;
 			}
+			_mm256_store_pd(&temp[0], pD);
+			c[k * dimM + m] = temp[0] + temp[1] + temp[2] + temp[3];
 		}
-	}
+	}*/
 
-	fIn.close();
-
-	return temp;
-}
-
-void	saveMatrix(std::string filename, const Matrix& mat){
-	std::ofstream	fOut(filename);
-	if (!fOut) {
-		std::cout << "Error opening file: " << filename << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	if(!(fOut << mat.getDimM() << " " << mat.getDimN() << std::endl))
-	{
-		std::cout << "Error in writing matrix entries!" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	for (int m = 0; m < mat.getDimM(); m++) {
-		for (int n = 0; n < mat.getDimN(); n++) {
-			if(!(fOut << mat(m, n) << std::endl))
-			{
-				std::cout << "Error in writing matrix entries!" << std::endl;
-				exit(EXIT_FAILURE);
-			}
-		}
-	}
-
-	fOut.close();
-}
-
-int main(int argc, char **argv) {
-
-	///******************************************************
-	///********************** INPUT *************************
-	///******************************************************
-
-	if (argc != 4) {
-		std::cout << "Invalid number of arguments!" << std::endl;
-		std::cout << "./compare A.out B.out" << std::endl;
-		exit(EXIT_FAILURE);
-	}
-
-	Matrix	A = loadMatrix(argv[1], &a[0]);
-	Matrix	B = loadMatrix(argv[2], &b[0]);
-	B.dataT = &bT[0];
-
-	Matrix	C(&c[0], nullptr, A.getDimM(), B.getDimN(), 0, 0);
-
-	Matrix	BT(&bT[0], nullptr, B.getDimN(), B.getDimM(), 0, 0);
-	
-	///******************************************************
-	///********************** CALCULATION *******************
-	///******************************************************
-	double time = 0;
-	
-#ifdef USE_LIKWID
-	likwid_markerInit();
-	likwid_markerStartRegion("dummy");
-#endif
-
-	siwir::Timer	timer;
-
-	transpose(B, BT);
-
-	naive(A, B, C);
-
-	time = timer.elapsed();
-	std::cout << A.getDimM() << "\t" << A.getDimN() << "\t" << C.getDimN() << "\t" << time << std::endl;
+	std::cout << dimK << "\t" << dimL << "\t" << dimM << "\t" << timer.elapsed() << std::endl;
 
 #ifdef USE_LIKWID
 	likwid_markerStopRegion("dummy");
@@ -198,5 +196,19 @@ int main(int argc, char **argv) {
 	///********************** OUTPUT ************************
 	///******************************************************
 
-	saveMatrix(argv[3], C);
+	std::ofstream	fOut(argv[3]);
+	if (!fOut) {
+		std::cout << "Error opening file: " << argv[3] << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	fOut << dimK << " " << dimM << std::endl;
+
+	for (unsigned int k = 0; k < dimK; k++) {
+		for (unsigned int m = 0; m < dimM; m++) {
+			fOut << c[k*dimM + m] << std::endl;
+		}
+	}
+
+	fOut.close();
 };

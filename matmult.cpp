@@ -36,9 +36,11 @@ double c[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
 
 inline
 void	transpose(const Matrix& M, Matrix& MT){
+	int dimM = M.getDimM();
+	int dimN = M.getDimN();
 	//transpose b
-	for (int m = 0; m < M.getDimM(); ++m){				///rows of b
-		for (int n = 0; n < M.getDimN(); ++n){			///cols of b	
+	for (int m = 0; m < dimM; ++m){				///rows of b
+		for (int n = 0; n < dimN; ++n){			///cols of b	
 			MT(n, m) = M(m, n);
 		}
 	}
@@ -47,8 +49,12 @@ void	transpose(const Matrix& M, Matrix& MT){
 ///calculates AxB=C
 inline
 void	naive(const Matrix& A, const Matrix& B, Matrix& C){
-	for (int m = 0; m < C.getDimM(); m+=3){				///rows of c
-		for (int n = 0; n < C.getDimN(); n+=3){			///cols of c	
+	int dimM = C.getDimM();
+	int dimN = C.getDimN();
+	int dimL = A.getDimN();
+	
+	for (int m = 0; m < dimM; m+=3){				///rows of c
+		for (int n = 0; n < dimN; n+=3){			///cols of c	
 			//std::cout << m << "\t" << n << std::endl;
 			__m256d*	pA = A.get(m, 0);
 			__m256d*	pB = A.get(m+1, 0);
@@ -66,7 +72,7 @@ void	naive(const Matrix& A, const Matrix& B, Matrix& C){
 			__m256d		X = _mm256_setzero_pd();
 			__m256d		Y = _mm256_setzero_pd();
 			__m256d		Z = _mm256_setzero_pd();
-			for (int l = 0; l < A.getDimN(); l+=4){
+			for (int l = 0; l < dimL; l+=4){
 				//std::cout <<"mul" << std::endl;
 				R = R + (*pA) * (*pK);
 				S = S + (*pA) * (*pL);

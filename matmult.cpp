@@ -28,10 +28,10 @@ T StringTo(const std::string& string){
 	return valor;
 }
 
-double a[LD * LD] __attribute__((aligned(32)));/// KxL - input
-double b[LD * LD] __attribute__((aligned(32)));/// LxM - input
-double bT[LD * LD] __attribute__((aligned(32)));
-double c[LD * LD] __attribute__((aligned(32)));/// KxM - output
+double a[LD * LD] __attribute__((aligned(0x40)));/// KxL - input
+double b[LD * LD] __attribute__((aligned(0x40)));/// LxM - input
+double bT[LD * LD] __attribute__((aligned(0x40)));
+double c[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
 
 
 inline
@@ -47,34 +47,37 @@ void	transpose(const Matrix& M, Matrix& MT){
 ///calculates AxB=C
 inline
 void	naive(const Matrix& A, const Matrix& B, Matrix& C){
-	for (int m = 0; m < C.getDimM(); ++m){				///rows of c
-		for (int n = 0; n < C.getDimN(); n+=4){			///cols of c	
+	for (int m = 0; m < C.getDimM(); m+=2){				///rows of c
+		for (int n = 0; n < C.getDimN(); n+=2){			///cols of c	
+			//std::cout << m << "\t" << n << std::endl;
 			__m256d*	pA = A.get(m, 0);
-			__m256d*	pB = B.getT(0, n);
-			__m256d*	pC = B.getT(0, n+1);
-			__m256d*	pD = B.getT(0, n+2);
-			__m256d*	pE = B.getT(0, n+3);
-			//__m256d		pC;
+			__m256d*	pB = A.get(m+1, 0);
+			__m256d*	pC = B.getT(0, n);
+			__m256d*	pD = B.getT(0, n+1);
+			//std::cout << pA << "\t" << pB << "\t" << pC << "\t" << pD << std::endl;
 			__m256d		W = _mm256_setzero_pd();
 			__m256d		X = _mm256_setzero_pd();
 			__m256d		Y = _mm256_setzero_pd();
 			__m256d		Z = _mm256_setzero_pd();
 			for (int l = 0; l < A.getDimN(); l+=4){
-				//pC = _mm256_mul_pd(*pA, *pB);
-				//pD = _mm256_add_pd(pC, pD);
-				W = W + (*pA) * (*pB);
-				X = X + (*pA) * (*pC);
-				Y = Y + (*pA) * (*pD);
-				Z = Z + (*pA) * (*pE);
+				//std::cout <<"mul" << std::endl;
+				W = W + (*pA) * (*pC);
+				X = X + (*pA) * (*pD);
+				Y = Y + (*pB) * (*pC);
+				Z = Z + (*pB) * (*pD);
+				//std::cout << "inc" <<std::endl;
 				pA++;
 				pB++;
 				pC++;
 				pD++;
-				pE++;
+				//pE++;
 			}
-			__m256d s = {W[0]+W[1]+W[2]+W[3], X[0]+X[1]+X[2]+X[3], Y[0]+Y[1]+Y[2]+Y[3], Z[0]+Z[1]+Z[2]+Z[3]};
+			//__m256d s = {W[0]+W[1]+W[2]+W[3], X[0]+X[1]+X[2]+X[3], Y[0]+Y[1]+Y[2]+Y[3], Z[0]+Z[1]+Z[2]+Z[3]};
 
-			C.set(m, n, s);
+			C(m, n) = W[0] + W[1] + W[2] + W[3];
+			C(m, n+1) = X[0] + X[1] + X[2] + X[3];
+			C(m+1, n) = Y[0] + Y[1] + Y[2] + Y[3];
+			C(m+1, n+1) = Z[0] + Z[1] + Z[2] + Z[3];
 		}
 	}
 }

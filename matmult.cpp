@@ -47,37 +47,56 @@ void	transpose(const Matrix& M, Matrix& MT){
 ///calculates AxB=C
 inline
 void	naive(const Matrix& A, const Matrix& B, Matrix& C){
-	for (int m = 0; m < C.getDimM(); m+=2){				///rows of c
-		for (int n = 0; n < C.getDimN(); n+=2){			///cols of c	
+	for (int m = 0; m < C.getDimM(); m+=3){				///rows of c
+		for (int n = 0; n < C.getDimN(); n+=3){			///cols of c	
 			//std::cout << m << "\t" << n << std::endl;
 			__m256d*	pA = A.get(m, 0);
 			__m256d*	pB = A.get(m+1, 0);
-			__m256d*	pC = B.getT(0, n);
-			__m256d*	pD = B.getT(0, n+1);
+			__m256d*	pC = A.get(m+2, 0);
+			__m256d*	pK = B.getT(0, n);
+			__m256d*	pL = B.getT(0, n+1);
+			__m256d*	pM = B.getT(0, n+2);
 			//std::cout << pA << "\t" << pB << "\t" << pC << "\t" << pD << std::endl;
+			__m256d		R = _mm256_setzero_pd();
+			__m256d		S = _mm256_setzero_pd();
+			__m256d		T = _mm256_setzero_pd();
+			__m256d		U = _mm256_setzero_pd();
+			__m256d		V = _mm256_setzero_pd();
 			__m256d		W = _mm256_setzero_pd();
 			__m256d		X = _mm256_setzero_pd();
 			__m256d		Y = _mm256_setzero_pd();
 			__m256d		Z = _mm256_setzero_pd();
 			for (int l = 0; l < A.getDimN(); l+=4){
 				//std::cout <<"mul" << std::endl;
-				W = W + (*pA) * (*pC);
-				X = X + (*pA) * (*pD);
-				Y = Y + (*pB) * (*pC);
-				Z = Z + (*pB) * (*pD);
+				R = R + (*pA) * (*pK);
+				S = S + (*pA) * (*pL);
+				T = T + (*pA) * (*pM);
+				U = U + (*pB) * (*pK);
+				V = V + (*pB) * (*pL);
+				W = W + (*pB) * (*pM);
+				X = X + (*pC) * (*pK);
+				Y = Y + (*pC) * (*pL);
+				Z = Z + (*pC) * (*pM);
 				//std::cout << "inc" <<std::endl;
 				pA++;
 				pB++;
 				pC++;
-				pD++;
+				pK++;
+				pL++;
+				pM++;
 				//pE++;
 			}
 			//__m256d s = {W[0]+W[1]+W[2]+W[3], X[0]+X[1]+X[2]+X[3], Y[0]+Y[1]+Y[2]+Y[3], Z[0]+Z[1]+Z[2]+Z[3]};
 
-			C(m, n) = W[0] + W[1] + W[2] + W[3];
-			C(m, n+1) = X[0] + X[1] + X[2] + X[3];
-			C(m+1, n) = Y[0] + Y[1] + Y[2] + Y[3];
-			C(m+1, n+1) = Z[0] + Z[1] + Z[2] + Z[3];
+			C(m  , n)     = R[0] + R[1] + R[2] + R[3];
+			C(m  , n+1)   = S[0] + S[1] + S[2] + S[3];
+			C(m  , n+2)   = T[0] + T[1] + T[2] + T[3];
+			C(m+1, n  )   = U[0] + U[1] + U[2] + U[3];
+			C(m+1, n+1)   = V[0] + V[1] + V[2] + V[3];
+			C(m+1, n+2)   = W[0] + W[1] + W[2] + W[3];
+			C(m+2, n  )   = X[0] + X[1] + X[2] + X[3];
+			C(m+2, n+1)   = Y[0] + Y[1] + Y[2] + Y[3];
+			C(m+2, n+2)   = Z[0] + Z[1] + Z[2] + Z[3];
 		}
 	}
 }

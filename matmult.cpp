@@ -43,16 +43,15 @@ void	transpose(const Matrix& M, Matrix& MT){
 	//transpose b
 
 	for (int m = 0; m < dimM; m+=BLOCK_SIZE){				///rows of b
-		for (int n = 0; n < dimN; n+=BLOCK_SIZE){			///cols of b	
-			for (int i = 0; i<BLOCK_SIZE; ++i){
-				__m256d*	pM = M.get(m+i, n);
-				for (int j = 0; j<BLOCK_SIZE; j+=4){
-					MT(n+j, m+i) = (*pM)[0];
-					MT(n+j+1, m+i) = (*pM)[1];
-					MT(n+j+2, m+i) = (*pM)[2];
-					MT(n+j+3, m+i) = (*pM)[3];
-					pM++;
-				}
+		for (int n = 0; n < dimN; n+=4){			///cols of b	
+			for (int i = m; i<m+BLOCK_SIZE; ++i){
+				__m256d*	pM = M.get(i, n);
+				MT(n, i) = (*pM)[0];
+				MT(n+1, i) = (*pM)[1];
+				MT(n+2, i) = (*pM)[2];
+				MT(n+3, i) = (*pM)[3];
+				pM++;
+				
 			}
 		}
 	}

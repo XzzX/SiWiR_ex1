@@ -33,13 +33,23 @@ public:
 	}
 	
 	inline
+	double& T(const int row, const int col) {
+		return dataT[(col+oCols) * LD + row + oRows];
+	}
+	
+	inline
+	const double& T(const int row, const int col) const {
+		return dataT[(col + oCols) * LD + row + oRows];
+	}
+	
+	inline
 	void	set(const int row, const int col, const __m256d& v){
 		_mm256_store_pd(&data[(row + oRows) * LD + col + oCols], v);
 	}
 
 	inline
 	void 	setT(const int row, const int col, const __m256d& v){
-		_mm256_store_pd(&data[(col + oCols) * LD + row + oRows], v);
+		_mm256_store_pd(&dataT[(col + oCols) * LD + row + oRows], v);
 	}
 
 	inline

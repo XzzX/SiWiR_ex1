@@ -34,6 +34,10 @@ double a[LD * LD] __attribute__((aligned(0x40)));/// KxL - input
 double b[LD * LD] __attribute__((aligned(0x40)));/// LxM - input
 double bT[LD * LD] __attribute__((aligned(0x40)));
 double c[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
+double p[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
+double ps[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
+double s[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
+double t[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
 
 
 inline
@@ -118,6 +122,86 @@ void	naive(const Matrix& A, const Matrix& B, Matrix& C){
 	}
 }
 
+void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S, Matrix& T){
+	int	dim = A.getDimM(); //equal for all matrix dimensions
+	int	dim2 = dim * 0.5;
+	//std::cout << dim << "\t" << dim2 << std::endl;	
+	
+	Matrix	A1 = A.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	A2 = A.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	A3 = A.getSubMatrix(dim2, 0, dim2, dim2);
+	Matrix	A4 = A.getSubMatrix(dim2, dim2, dim2, dim2);
+	
+	Matrix	B1 = B.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	B2 = B.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	B3 = B.getSubMatrix(dim2, 0, dim2, dim2);
+	Matrix	B4 = B.getSubMatrix(dim2, dim2, dim2, dim2);
+	
+	Matrix	C1 = C.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	C2 = C.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	C3 = C.getSubMatrix(dim2, 0, dim2, dim2);
+	Matrix	C4 = C.getSubMatrix(dim2, dim2, dim2, dim2);
+	
+	Matrix	S1 = S.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	S2 = S.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	S3 = S.getSubMatrix(dim2, 0, dim2, dim2);
+	Matrix	S4 = S.getSubMatrix(dim2, dim2, dim2, dim2);
+	
+	
+	Matrix	T1 = T.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	T2 = T.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	T3 = T.getSubMatrix(dim2, 0, dim2, dim2);
+	Matrix	T4 = T.getSubMatrix(dim2, dim2, dim2, dim2);
+		
+	Matrix	P1 = P.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	P2 = P.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	P3 = P.getSubMatrix(dim2, 0, dim2, dim2);
+	Matrix	P4 = P.getSubMatrix(dim2, dim2, dim2, dim2);
+
+	Matrix	P5 = Ps.getSubMatrix(0, 0, dim2, dim2);
+	Matrix	P6 = Ps.getSubMatrix(0, dim2, dim2, dim2);
+	Matrix	P7 = Ps.getSubMatrix(dim2, 0, dim2, dim2);
+	//Matrix	P8 = Ps.getSubMatrix(dim2, dim2, dim2, dim2);
+	//std::cout << "submatrices" << std::endl;
+	
+	//compute temporary S and T matrices
+	for (int i=0; i<dim2; ++i){
+		for (int j=0; j<dim2; ++j){
+			//std::cout << "S" << std::endl;
+			S1(i, j) = A3(i, j) + A4(i, j);
+			S2(i, j) = S1(i, j) - A1(i, j);
+			S3(i, j) = A1(i ,j) - A3(i, j);
+			S4(i, j) = A2(i, j) - S2(i, j);
+			//std::cout << "T" << std::endl;
+			T1.T(i, j) = B2.T(i, j) - B1.T(i, j);
+			T2.T(i, j) = B4.T(i, j) - T1.T(i, j);
+			T3.T(i, j) = B4.T(i ,j) - B2.T(i, j);
+			T4.T(i, j) = B3.T(i, j) - T2.T(i, j);
+
+		}
+	
+	}
+	
+	//calculate products
+	naive(A1, B1, P1);
+	naive(A2, B3, P2);
+	naive(S1, T1, P3);
+	naive(S2, T2, P4);
+	naive(S3, T3, P5);
+	naive(S4, B4, P6);
+	naive(A4, T4, P7);
+	
+	//assemble final matrix
+	for (int i=0; i<dim2; ++i){
+		for (int j=0; j<dim2; ++j){
+			C1(i, j) = P1(i, j) + P2(i, j);
+			C3(i, j) = P1(i, j) + P4(i, j) + P5(i, j) + P7(i, j);
+			C4(i, j) = P1(i, j) + P4(i, j) + P5(i, j) + P3(i, j);
+			C2(i, j) = P1(i, j) + P3(i, j) + P4(i, j) + P6(i, j);
+		}
+	}
+}
+
 void	zeroMemory(double* data){
 	for (int i = 0; i < LD; ++i)
 		for (int j = 0; j < LD; ++j)
@@ -189,8 +273,25 @@ void	saveMatrix(std::string filename, const Matrix& mat){
 	fOut.close();
 }
 
-int main(int argc, char **argv) {
+void	printMatrix(const Matrix& mat){
+	for (int m = 0; m < mat.getDimM(); m++) {
+		for (int n = 0; n < mat.getDimN(); n++) {
+			std::cout << mat(m, n) << " ";
+		}
+		std::cout << std::endl;
+	}
+}
 
+void	printMatrixT(const Matrix& mat){
+	for (int m = 0; m < mat.getDimM(); m++) {
+		for (int n = 0; n < mat.getDimN(); n++) {
+			std::cout << mat.T(m, n) << " ";
+		}
+		std::cout << std::endl;
+	}
+}
+
+int main(int argc, char **argv) {
 	///******************************************************
 	///********************** INPUT *************************
 	///******************************************************
@@ -209,6 +310,10 @@ int main(int argc, char **argv) {
 
 	Matrix	BT(&bT[0], nullptr, B.getDimN(), B.getDimM(), 0, 0);
 	
+	Matrix	P(&p[0], nullptr, A.getDimM(), A.getDimM(), 0, 0);
+	Matrix	PS(&ps[0], nullptr, A.getDimM(), A.getDimM(), 0, 0);
+	Matrix	S(&s[0], nullptr, A.getDimM(), A.getDimM(), 0, 0);
+	Matrix	T(nullptr, &t[0], A.getDimM(), A.getDimM(), 0, 0);
 	///******************************************************
 	///********************** CALCULATION *******************
 	///******************************************************
@@ -220,10 +325,13 @@ int main(int argc, char **argv) {
 #endif
 
 	siwir::Timer	timer;
+	A.dimRows = 2048;
 
 	transpose(B, BT);
+	
+	//naive(A, B, C);
 
-	naive(A, B, C);
+	strassen(A, B, C, P, PS, S, T);
 
 	time = timer.elapsed();
 	std::cout << A.getDimM() << "\t" << A.getDimN() << "\t" << C.getDimN() << "\t" << time << std::endl;

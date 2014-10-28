@@ -11,54 +11,59 @@ public:
 	double*		dataT;
 	
 	//matrix dimensions
-	int	dimM;
-	int	dimN;
+	int	dimRows;
+	int	dimCols;
 
 	//access offset
-	int	oM;
-	int	oN;
+	int	oRows;
+	int	oCols;
 
-	Matrix(double*	dat, double* datT, const int m, const int n, const int offsetM, const int offsetN) : data(dat), dataT(datT), dimM(m), dimN(n), oM(offsetM), oN(offsetN){
+	Matrix(double*	dat, double* datT, const int m, const int n, const int offsetM, const int offsetN) : data(dat), dataT(datT), dimRows(m), dimCols(n), oRows(offsetM), oCols(offsetN){
 	}
 
 	
 	inline
 	double& operator()(const int row, const int col) {
-		return data[row * LD + col];
+		return data[(row+oRows) * LD + col + oCols];
 	}
 	
 	inline
 	const double& operator()(const int row, const int col) const {
-		return data[row * LD + col];
+		return data[(row + oRows) * LD + col + oCols];
 	}
 	
 	inline
 	void	set(const int row, const int col, const __m256d& v){
-		_mm256_store_pd(&data[row * LD + col], v);
+		_mm256_store_pd(&data[(row + oRows) * LD + col + oCols], v);
 	}
 
 	inline
 	void 	setT(const int row, const int col, const __m256d& v){
-		_mm256_store_pd(&data[row * LD + col], v);
+		_mm256_store_pd(&data[(col + oCols) * LD + row + oRows], v);
 	}
 
 	inline
 	__m256d* get(const int row, const int col) const {
-		return (__m256d*)(&data[row * LD + col]);
+		return (__m256d*)(&data[(row + oRows) * LD + col + oCols]);
 	}
 
 	inline
 	__m256d* getT(const int row, const int col) const {
-		return (__m256d*)(&dataT[col * LD + row]);
+		return (__m256d*)(&dataT[(col + oCols) * LD + row + oRows]);
+	}
+
+	inline
+	Matrix getSubMatrix(const int row, const int col, const int dimR, const int dimC){
+		return Matrix(data, dataT, dimR, dimC, row+oRows, col + oCols);
 	}
 
 	inline
 	int getDimM() const {
-		return dimM;
+		return dimRows;
 	}
 	inline
 	int getDimN() const {
-		return dimN;
+		return dimCols;
 	}
 };
 

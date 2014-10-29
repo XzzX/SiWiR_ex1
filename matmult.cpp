@@ -388,10 +388,12 @@ void	MMM(Matrix& A, Matrix& B, Matrix& C){
 	A.dimRows = LD - PADDING;
 
 	transpose(B, BT);
-	
-	//naive(A, BT, C);
 
-	strassen(A, BT, C, P, PS, S, T);
+	if (A.dimRows<TRUNCATION_POINT){
+		naive(A, BT, C);
+	} else {
+		strassen(A, BT, C, P, PS, S, T);
+	}
 
 	free(BT.data);
 	free(P.data);
@@ -442,7 +444,8 @@ int main(int argc, char **argv) {
 
 	fIn.close();
 
-	LD = dimM;
+	LD = 64;
+	if (LD<dimM) LD = dimM;
 	if (LD<dimN) LD = dimN;
 	if (LD<dimO) LD = dimO;
 
@@ -479,7 +482,7 @@ int main(int argc, char **argv) {
 	MMM(A, B, C);
 
 	time = timer.elapsed();
-	std::cout << A.getDimM() << "\t" << A.getDimN() << "\t" << C.getDimN() << "\t" << time << std::endl;
+	std::cout << dimM << "\t" << dimN << "\t" << dimO << "\t" << time << std::endl;
 
 #ifdef USE_LIKWID
 	likwid_markerStopRegion("dummy");

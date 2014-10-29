@@ -188,17 +188,45 @@ void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S,
 	
 	//compute temporary S and T matrices
 	for (int i=0; i<dim2; ++i){
-		for (int j=0; j<dim2; ++j){
+		for (int j=0; j<dim2; j+=4){
 			//std::cout << "S" << std::endl;
-			S1(i, j) = A3(i, j) + A4(i, j);
-			S2(i, j) = S1(i, j) - A1(i, j);
-			S3(i, j) = A1(i ,j) - A3(i, j);
-			S4(i, j) = A2(i, j) - S2(i, j);
+			__m256d*	pA1 = A1.get(i, j);
+			__m256d*	pA2 = A2.get(i, j);
+			__m256d*	pA3 = A3.get(i, j);
+			__m256d*	pA4 = A4.get(i, j);
+			__m256d*	pS2 = S2.get(i, j);
+			S1.set(i, j, (*pA3)+(*pA4));
+			S2.set(i, j, (*pA3)+(*pA4)-(*pA1));
+			S3.set(i, j, (*pA1)-(*pA3));
+			S4.set(i, j, (*pA2)-(*pS2));
+			pA1++;
+			pA2++;
+			pA3++;
+			pA4++;
+			pS2++;
+			//S1(i, j) = A3(i, j) + A4(i, j);
+			//S2(i, j) = S1(i, j) - A1(i, j);
+			//S3(i, j) = A1(i ,j) - A3(i, j);
+			//S4(i, j) = A2(i, j) - S2(i, j);
 			//std::cout << "T" << std::endl;
-			T1.T(i, j) = B2.T(i, j) - B1.T(i, j);
-			T2.T(i, j) = B4.T(i, j) - T1.T(i, j);
-			T3.T(i, j) = B4.T(i ,j) - B2.T(i, j);
-			T4.T(i, j) = B3.T(i, j) - T2.T(i, j);
+			__m256d*	pB1 = B1.getT(j, i);
+			__m256d*	pB2 = B2.getT(j, i);
+			__m256d*	pB3 = B3.getT(j, i);
+			__m256d*	pB4 = B4.getT(j, i);
+			__m256d*	pT2 = T2.getT(j, i);
+			T1.setT(j, i, (*pB2)-(*pB1));
+			T2.setT(j, i, (*pB4)-((*pB2)-(*pB1)));
+			T3.setT(j, i, (*pB4)-(*pB2));
+			T4.setT(j, i, (*pB3)-(*pT2));
+			pB1++;
+			pB2++;
+			pB3++;
+			pB4++;
+			pT2++;
+			//T1.T(j, i) = B2.T(j, i) - B1.T(j, i);
+			//T2.T(j, i) = B4.T(j, i) - T1.T(j, i);
+			//T3.T(j, i) = B4.T(j ,i) - B2.T(j, i);
+			//T4.T(j, i) = B3.T(j, i) - T2.T(j, i);
 
 		}
 	
@@ -225,11 +253,29 @@ void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S,
 	
 	//assemble final matrix
 	for (int i=0; i<dim2; ++i){
-		for (int j=0; j<dim2; ++j){
-			C1(i, j) = P1(i, j) + P2(i, j);
-			C3(i, j) = P1(i, j) + P4(i, j) + P5(i, j) + P7(i, j);
-			C4(i, j) = P1(i, j) + P4(i, j) + P5(i, j) + P3(i, j);
-			C2(i, j) = P1(i, j) + P3(i, j) + P4(i, j) + P6(i, j);
+		for (int j=0; j<dim2; j+=4){
+			__m256d*	pP1 = P1.get(i, j);
+			__m256d*	pP2 = P2.get(i, j);
+			__m256d*	pP3 = P3.get(i, j);
+			__m256d*	pP4 = P4.get(i, j);
+			__m256d*	pP5 = P5.get(i, j);
+			__m256d*	pP6 = P6.get(i, j);
+			__m256d*	pP7 = P7.get(i, j);
+			C1.set(i, j, (*pP1) + (*pP2));
+			C3.set(i, j, (*pP1) + (*pP4) + (*pP5) + (*pP7));
+			C4.set(i, j, (*pP1) + (*pP4) + (*pP5) + (*pP3));
+			C2.set(i, j, (*pP1) + (*pP4) + (*pP3) + (*pP6));
+			//C1(i, j) = P1(i, j) + P2(i, j);
+			//C3(i, j) = P1(i, j) + P4(i, j) + P5(i, j) + P7(i, j);
+			//C4(i, j) = P1(i, j) + P4(i, j) + P5(i, j) + P3(i, j);
+			//C2(i, j) = P1(i, j) + P3(i, j) + P4(i, j) + P6(i, j);
+			pP1++;
+			pP2++;
+			pP3++;
+			pP4++;
+			pP5++;
+			pP6++;
+			pP7++;
 		}
 	}
 }

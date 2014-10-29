@@ -4,8 +4,8 @@ import matplotlib.pyplot as pl
 k, l, m, t = np.loadtxt("perf.txt").transpose()
 pl.plot(k, t, "x", label="current")
 
-k, l, m, t = np.loadtxt("data/naive.txt").transpose()
-pl.plot(k, t, "x", label="naive")
+k, l, m, t = np.loadtxt("data/tutor.txt").transpose()
+pl.plot(k, t, "x", label="tutor")
 
 k, l, m, t = np.loadtxt("data/blas.txt").transpose()
 pl.plot(k, t, "x", label="blas")

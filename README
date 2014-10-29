@@ -1,0 +1,38 @@
+SiWiR_ex1
+First assignment of SiWiR course!
+
+URL:
+git clone git@github.com:XzzX/SiWiR_ex1.git
+
+
+MAKE TARGETS:
+
+make matmult
+Compiles the matmult program.
+./matmult A B C
+calculates C = AxB
+
+make compare
+Compiles the compare utility
+./compare A B
+A==B?
+
+make test
+Runs matmult for all test matrices and compares results to given ones.
+
+make perf
+Runs mamult for all performance matrices and stores runtime in perf.txt. Everything is plottet via plot.py and the output is writte to current.pdf
+
+
+BRANCHES:
+master
+Contains the framework. No algorithm is to be implemented - no changes to Calculation region of matmult.cpp. Should be easiely mergeable with all implementation branches.
+
+naive
+Implementation of naive algorithm. Only changes to Calculation region of matmult.cpp.
+
+blas
+Using of MMM from ATLAS. Only changes to Calculation region of matmult.cpp.
+
+strassen
+Implementation of strassen algorithm. (TODO)

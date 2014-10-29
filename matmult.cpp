@@ -14,6 +14,7 @@ extern "C" {
 #include	"Timer.h"
 #include	"matrix.hpp"
 
+static const int	ALIGNMENT = 0x40;
 static const int	BLOCK_SIZE = 128; ///multiple of 4!!!!!!!!!!!!!!!!!!!!!!!
 
 /**
@@ -32,13 +33,7 @@ T StringTo(const std::string& string){
 
 double a[LD * LD] __attribute__((aligned(0x40)));/// KxL - input
 double b[LD * LD] __attribute__((aligned(0x40)));/// LxM - input
-double bT[LD * LD] __attribute__((aligned(0x40)));
 double c[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
-double p[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
-double ps[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
-double s[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
-double t[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
-
 
 inline
 void	transpose(const Matrix& M, Matrix& MT){
@@ -369,11 +364,36 @@ void	printMatrixT(const Matrix& mat){
 	}
 }
 
+inline
+void	MMM(Matrix& A, Matrix& B, Matrix& C){
+	double* temp = (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD);
+
+	Matrix	BT(temp, temp, B.getDimN(), B.getDimM(), 0, 0);
+	
+	Matrix	P( (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD), nullptr, A.getDimM(), A.getDimM(), 0, 0);
+	Matrix	PS( (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD), nullptr, A.getDimM(), A.getDimM(), 0, 0);
+	Matrix	S( (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD), nullptr, A.getDimM(), A.getDimM(), 0, 0);
+	Matrix	T(nullptr, (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD), A.getDimM(), A.getDimM(), 0, 0);
+
+	A.dimRows = 2048;
+
+	transpose(B, BT);
+	
+	//naive(A, BT, C);
+
+	strassen(A, BT, C, P, PS, S, T);
+
+	free(BT.data);
+	free(P.data);
+	free(PS.data);
+	free(S.data);
+	free(T.dataT);
+}
+
 int main(int argc, char **argv) {
 	///******************************************************
 	///********************** INPUT *************************
 	///******************************************************
-
 	if (argc != 4) {
 		std::cout << "Invalid number of arguments!" << std::endl;
 		std::cout << "./compare A.out B.out" << std::endl;
@@ -382,16 +402,8 @@ int main(int argc, char **argv) {
 
 	Matrix	A = loadMatrix(argv[1], &a[0]);
 	Matrix	B = loadMatrix(argv[2], &b[0]);
-	B.dataT = &bT[0];
-
 	Matrix	C(&c[0], nullptr, A.getDimM(), B.getDimN(), 0, 0);
 
-	Matrix	BT(&bT[0], nullptr, B.getDimN(), B.getDimM(), 0, 0);
-	
-	Matrix	P(&p[0], nullptr, A.getDimM(), A.getDimM(), 0, 0);
-	Matrix	PS(&ps[0], nullptr, A.getDimM(), A.getDimM(), 0, 0);
-	Matrix	S(&s[0], nullptr, A.getDimM(), A.getDimM(), 0, 0);
-	Matrix	T(nullptr, &t[0], A.getDimM(), A.getDimM(), 0, 0);
 	///******************************************************
 	///********************** CALCULATION *******************
 	///******************************************************
@@ -404,13 +416,7 @@ int main(int argc, char **argv) {
 
 	siwir::Timer	timer;
 
-	A.dimRows = 2048;
-
-	transpose(B, BT);
-	
-	//naive(A, B, C);
-
-	strassen(A, B, C, P, PS, S, T);
+	MMM(A, B, C);
 
 	time = timer.elapsed();
 	std::cout << A.getDimM() << "\t" << A.getDimN() << "\t" << C.getDimN() << "\t" << time << std::endl;

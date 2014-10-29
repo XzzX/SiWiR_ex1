@@ -203,15 +203,25 @@ void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S,
 		}
 	
 	}
-	
+
 	//calculate products
-	naive(A1, B1, P1);
-	naive(A2, B3, P2);
-	naive(S1, T1, P3);
-	naive(S2, T2, P4);
-	naive(S3, T3, P5);
-	naive(S4, B4, P6);
-	naive(A4, T4, P7);
+	if (dim2<600) {
+		naive(A1, B1, P1);
+		naive(A2, B3, P2);
+		naive(S1, T1, P3);
+		naive(S2, T2, P4);
+		naive(S3, T3, P5);
+		naive(S4, B4, P6);
+		naive(A4, T4, P7);
+	} else {
+		strassen(A1, B1, P1, C1, C2, C3, B2);
+		strassen(A2, B3, P2, C1, C2, C3, B2);
+		strassen(S1, T1, P3, C1, C2, C3, B2);
+		strassen(S2, T2, P4, C1, C2, C3, B2);
+		strassen(S3, T3, P5, C1, C2, C3, B2);
+		strassen(S4, B4, P6, C1, C2, C3, B2);
+		strassen(A4, T4, P7, C1, C2, C3, B2);
+	}
 	
 	//assemble final matrix
 	for (int i=0; i<dim2; ++i){
@@ -347,6 +357,7 @@ int main(int argc, char **argv) {
 #endif
 
 	siwir::Timer	timer;
+
 	A.dimRows = 2048;
 
 	transpose(B, BT);

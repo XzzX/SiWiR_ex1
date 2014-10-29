@@ -3,7 +3,7 @@
 
 #include	<immintrin.h>
 
-static const int	LD = 2144;
+int	LD = 2144;
 
 class	Matrix{
 public:

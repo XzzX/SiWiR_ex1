@@ -16,6 +16,8 @@ extern "C" {
 
 static const int	ALIGNMENT = 0x40;
 static const int	BLOCK_SIZE = 128; ///multiple of 4!!!!!!!!!!!!!!!!!!!!!!!
+static const int	PADDING = 64;
+static const int	TRUNCATION_POINT = 600;
 
 /**
   Converts a string to an arbitrary type. >> operator must be defined for the target type.
@@ -30,10 +32,6 @@ T StringTo(const std::string& string){
 	stream >> valor;
 	return valor;
 }
-
-double a[LD * LD] __attribute__((aligned(0x40)));/// KxL - input
-double b[LD * LD] __attribute__((aligned(0x40)));/// LxM - input
-double c[LD * LD] __attribute__((aligned(0x40)));/// KxM - output
 
 inline
 void	transpose(const Matrix& M, Matrix& MT){
@@ -228,7 +226,7 @@ void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S,
 	}
 
 	//calculate products
-	if (dim2<600) {
+	if (dim2<TRUNCATION_POINT) {
 		naive(A1, B1, P1);
 		naive(A2, B3, P2);
 		naive(S1, T1, P3);
@@ -366,6 +364,18 @@ void	printMatrixT(const Matrix& mat){
 
 inline
 void	MMM(Matrix& A, Matrix& B, Matrix& C){
+	/*int	LD = A.dimRows;
+	if (LD<A.dimCols) LD = A.dimCols;
+	if (LD<B.dimCols) LD = B.dimCols;
+
+	LD--;
+	LD |= LD >> 1;
+	LD |= LD >> 2;
+	LD |= LD >> 4;
+	LD |= LD >> 8;
+	LD |= LD >> 16;
+	LD++;*/
+
 	double* temp = (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD);
 
 	Matrix	BT(temp, temp, B.getDimN(), B.getDimM(), 0, 0);
@@ -375,7 +385,7 @@ void	MMM(Matrix& A, Matrix& B, Matrix& C){
 	Matrix	S( (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD), nullptr, A.getDimM(), A.getDimM(), 0, 0);
 	Matrix	T(nullptr, (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD), A.getDimM(), A.getDimM(), 0, 0);
 
-	A.dimRows = 2048;
+	A.dimRows = LD - PADDING;
 
 	transpose(B, BT);
 	
@@ -399,6 +409,56 @@ int main(int argc, char **argv) {
 		std::cout << "./compare A.out B.out" << std::endl;
 		exit(EXIT_FAILURE);
 	}
+
+	int dimM = 0;
+	int dimN = 0;
+	int dimO = 0;
+
+	//get dimensions
+	std::ifstream	fIn(argv[1]);
+	if (!fIn) {
+		std::cout << "Error opening file: " << argv[1] << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	if(!(fIn >> dimM >> dimN))
+	{
+		std::cout << "Error in reading matrix entries!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	fIn.close();
+
+	fIn.open(argv[2]);
+	if (!fIn) {
+		std::cout << "Error opening file: " << argv[2] << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	if(!(fIn >> dimN >> dimO))
+	{
+		std::cout << "Error in reading matrix entries!" << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	fIn.close();
+
+	LD = dimM;
+	if (LD<dimN) LD = dimN;
+	if (LD<dimO) LD = dimO;
+
+	LD--;
+	LD |= LD >> 1;
+	LD |= LD >> 2;
+	LD |= LD >> 4;
+	LD |= LD >> 8;
+	LD |= LD >> 16;
+	LD++;
+
+	LD += PADDING;
+
+	double* a = (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD);
+	double* b = (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD);
+	double* c = (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD);
 
 	Matrix	A = loadMatrix(argv[1], &a[0]);
 	Matrix	B = loadMatrix(argv[2], &b[0]);
@@ -431,4 +491,8 @@ int main(int argc, char **argv) {
 	///******************************************************
 
 	saveMatrix(argv[3], C);
+
+	free(a);
+	free(b);
+	free(c);
 };

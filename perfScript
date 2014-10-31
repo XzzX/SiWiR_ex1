@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# do not forget to execute "module load likwid" !
+
+CORE="2"
+PROGRAM="matmult"
+
+for j in 32x32 64x64 128x128 256x256 512x512 1024x1024 2048x2048
+do
+  for i in L2 L2CACHE FLOPS_DP
+  do
+    echo Measuring performance $1 $j
+    likwid-perfctr -C $CORE -g $i -m ./$PROGRAM matrices/perfMatrices/$j-1 matrices/perfMatrices/$j-2 $j-out >> perfLikwid.txt
+  done
+done
+

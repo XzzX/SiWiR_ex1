@@ -14,9 +14,13 @@ extern "C" {
 #include	"Timer.h"
 #include	"matrix.hpp"
 
+///Base alignment of all matrices. Multiple of 32 because of AVX instructions.
 static const int	ALIGNMENT = 0x40;
+///Block size for transpose function
 static const int	BLOCK_SIZE = 128; ///multiple of 4!!!!!!!!!!!!!!!!!!!!!!!
+///padding added to each matrix row or col
 static const int	PADDING = 64;
+///below this matrix size switch from strassen to naive
 static const int	TRUNCATION_POINT = 600;
 
 /**
@@ -33,6 +37,13 @@ T StringTo(const std::string& string){
 	return valor;
 }
 
+/*
+Transpose Matrix M and write result to Matrix MT
+
+M is not changed
+@param M input matrix
+@param MT output matrix
+*/
 inline
 void	transpose(const Matrix& M, Matrix& MT){
 	int dimM = M.getDimM();
@@ -54,15 +65,23 @@ void	transpose(const Matrix& M, Matrix& MT){
 	}
 }
 
-///calculates AxB=C
+/*
+Naive implementation of Matrix Matrix Multiplication
+
+@param A input matrix
+@param B input matrix
+@param C output matrix
+*/
 inline
 void	naive(const Matrix& A, const Matrix& B, Matrix& C){
+	//preload dimensions for faster access
 	int dimM = C.getDimM();
 	int dimN = C.getDimN();
 	int dimL = A.getDimN();
 	
 	for (int m = 0; m < dimM; m+=4){				///rows of c
 		for (int n = 0; n < dimN; n+=4){			///cols of c	
+			//do calculation of a 4x4 block
 			//std::cout << m << "\t" << n << std::endl;
 			__m256d*	pA = A.get(m, 0);
 			__m256d*	pB = A.get(m+1, 0);
@@ -137,11 +156,24 @@ void	naive(const Matrix& A, const Matrix& B, Matrix& C){
 	}
 }
 
+/*
+Strassen implementation of Matrix Matrix Multiplication
+
+@param A input row major matrix
+@param B input COLUMN MAJOR matrix
+@param C output row major matrix
+@param P temporary row major matrix
+@param Ps temporary row major matrix
+@param S temporary row major matrix
+@param T temporary COLUMN MAJOR matrix
+*/
 void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S, Matrix& T){
+	//get matrix dimensions and calculate size of blocks
 	int	dim = A.getDimM(); //equal for all matrix dimensions
 	int	dim2 = dim * 0.5;
 	//std::cout << dim << "\t" << dim2 << std::endl;	
 	
+	//get blocks
 	Matrix	A1 = A.getSubMatrix(0, 0, dim2, dim2);
 	Matrix	A2 = A.getSubMatrix(0, dim2, dim2, dim2);
 	Matrix	A3 = A.getSubMatrix(dim2, 0, dim2, dim2);
@@ -273,13 +305,24 @@ void	strassen(Matrix& A, Matrix& B, Matrix& C, Matrix& P, Matrix& Ps, Matrix& S,
 	}
 }
 
+/*
+Zeros complete array. Would be also possible with memset ;)
+@param data pointer to matrix data structure
+*/
 void	zeroMemory(double* data){
 	for (int i = 0; i < LD; ++i)
 		for (int j = 0; j < LD; ++j)
 			data[i*LD + j] = 0;
 }
 
-Matrix	loadMatrix(std::string filename, double* data){
+/*
+Loads matrix from given txt file
+
+@param filename filename of input file
+@param data data structure
+@return loaded matrix structure
+*/
+Matrix	loadMatrix(const std::string filename, double* data){
 	int dimM = 0;
 	int dimN = 0;
 	
@@ -318,7 +361,13 @@ Matrix	loadMatrix(std::string filename, double* data){
 	return temp;
 }
 
-void	saveMatrix(std::string filename, const Matrix& mat){
+/*
+Saves matrix to file
+
+@param filename filename for the txt output
+@param mat matrix to be outputted
+*/
+void	saveMatrix(const std::string filename, const Matrix& mat){
 	std::ofstream	fOut(filename);
 	if (!fOut) {
 		std::cout << "Error opening file: " << filename << std::endl;
@@ -344,6 +393,9 @@ void	saveMatrix(std::string filename, const Matrix& mat){
 	fOut.close();
 }
 
+/*
+debug output of natrix
+*/
 void	printMatrix(const Matrix& mat){
 	for (int m = 0; m < mat.getDimM(); m++) {
 		for (int n = 0; n < mat.getDimN(); n++) {
@@ -353,6 +405,9 @@ void	printMatrix(const Matrix& mat){
 	}
 }
 
+/*
+debug output of matrix
+*/
 void	printMatrixT(const Matrix& mat){
 	for (int m = 0; m < mat.getDimM(); m++) {
 		for (int n = 0; n < mat.getDimN(); n++) {
@@ -362,6 +417,13 @@ void	printMatrixT(const Matrix& mat){
 	}
 }
 
+
+/*
+convenience function for Matrix Matrix Multiplication
+@param A input matrix
+@param B input matrix (COLUMN MAJOR)
+@param C output matrix
+*/
 inline
 void	MMM(Matrix& A, Matrix& B, Matrix& C){
 	/*int	LD = A.dimRows;
@@ -412,6 +474,7 @@ int main(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	//matrix dimensions
 	int dimM = 0;
 	int dimN = 0;
 	int dimO = 0;
@@ -444,6 +507,10 @@ int main(int argc, char **argv) {
 
 	fIn.close();
 
+	//calculate minimal matrix size
+	//all matrices are padded with 0s to this size
+	//should be power of 2 for efficient block division
+	//dirty hack...
 	LD = 64;
 	if (LD<dimM) LD = dimM;
 	if (LD<dimN) LD = dimN;
@@ -457,6 +524,7 @@ int main(int argc, char **argv) {
 	LD |= LD >> 16;
 	LD++;
 
+	//add useless padding
 	LD += PADDING;
 
 	double* a = (double*) aligned_alloc(ALIGNMENT, sizeof(double) * LD * LD);

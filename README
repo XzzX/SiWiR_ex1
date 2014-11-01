@@ -1,21 +1,37 @@
+ASSIGNMENT:
 SiWiR_ex1
 First assignment of SiWiR course!
 
-URL:
+
+GROUP:
+Eibl, Sebastian
+Schottenhamml, Julia
+Sen, Karnajit
+
+
+REPOSITORY URL:
 git clone git@github.com:XzzX/SiWiR_ex1.git
+
+
+EXECUTABLES:
+./matmult A B C
+calculates C = AxB
+Output shows matrix dimensions and time needed for calculation.
+
+./compare A B
+A==B?
 
 
 MAKE TARGETS:
 
+make
+Compiles the matmult program.
+
 make matmult
 Compiles the matmult program.
-./matmult A B C
-calculates C = AxB
 
 make compare
-Compiles the compare utility
-./compare A B
-A==B?
+Compiles the compare utility.
 
 make test
 Runs matmult for all test matrices and compares results to given ones.
@@ -24,15 +40,19 @@ make perf
 Runs mamult for all performance matrices and stores runtime in perf.txt. Everything is plottet via plot.py and the output is writte to current.pdf
 
 
-BRANCHES:
-master
-Contains the framework. No algorithm is to be implemented - no changes to Calculation region of matmult.cpp. Should be easiely mergeable with all implementation branches.
+DIRECTORY STRUCTURE:
 
-naive
-Implementation of naive algorithm. Only changes to Calculation region of matmult.cpp.
+:
+source files
 
-blas
-Using of MMM from ATLAS. Only changes to Calculation region of matmult.cpp.
+assignment:
+exercise sheet
 
-strassen
-Implementation of strassen algorithm. (TODO)
+data:
+performance data to be plotted
+
+example:
+provided likwid example
+
+matrices:
+provided matrices

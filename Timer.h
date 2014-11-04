@@ -1,4 +1,5 @@
 #include <chrono>
+//using namespace std;
 
 namespace siwir {
 
@@ -6,7 +7,10 @@ class Timer
 {
 private:
    
-   typedef std::chrono::high_resolution_clock Clock_T;
+   typedef std::
+
+
+		   high_resolution_clock Clock_T;
    
 public:
    
